@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>果品计价器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+    body {
+      background: #f5f5f7;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 16px;
+      margin: 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 460px;
+      background: #ffffff;
+      border-radius: 32px;
+      padding: 24px 18px 28px;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #1c1c1e;
+      letter-spacing: -0.5px;
+      margin: 0;
+    }
+    .toggle-wrap {
+      display: flex;
+      background: #f2f2f7;
+      border-radius: 30px;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+    .toggle-btn {
+      border: none;
+      background: transparent;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #8e8e93;
+      cursor: pointer;
+      transition: 0.2s;
+      white-space: nowrap;
+      touch-action: manipulation;
+    }
+    .toggle-btn.active {
+      background: #ffffff;
+      color: #007aff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      font-weight: 600;
+    }
+    .sub {
+      font-size: 0.95rem;
+      color: #8e8e93;
+      margin-bottom: 22px;
+      padding-left: 14px;
+      border-left: 4px solid #007aff;
+    }
+    .grid-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 8px;
+      padding: 0 4px;
+    }
+    .grid-header span {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #3a3a3c;
+      background: #f2f2f7;
+      border-radius: 30px;
+      text-align: center;
+      padding: 6px 0;
+      letter-spacing: 0.3px;
+    }
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+      background: #f8f8fc;
+      border-radius: 60px;
+      padding: 0 6px 0 16px;
+      border: 1.5px solid #e5e5ea;
+      transition: border 0.15s, background 0.15s;
+      min-height: 52px;
+    }
+    .input-group:focus-within {
+      border-color: #007aff;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+    }
+    .input-group label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #1c1c1e;
+      white-space: nowrap;
+      margin-right: 4px;
+      min-width: 34px;
+    }
+    .input-group input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 14px 6px 14px 2px;
+      font-size: 1rem;
+      font-weight: 450;
+      color: #1c1c1e;
+      outline: none;
+      width: 100%;
+      text-align: right;
+      -moz-appearance: textfield;
+      min-width: 0;
+    }
+    .input-group input::-webkit-outer-spin-button,
+    .input-group input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .input-group input::placeholder {
+      color: #aeaeb2;
+      font-weight: 300;
+      font-size: 0.85rem;
+    }
+    .input-group.price {
+      background: #f0f4ff;
+      border-color: #c6d9ff;
+    }
+    .input-group.price:focus-within {
+      background: #ffffff;
+      border-color: #007aff;
+    }
+    .input-group.price label {
+      color: #0047b3;
+      font-weight: 600;
+    }
+
+    /* 固定价格显示 */
+    .fixed-price {
+      flex: 1;
+      text-align: right;
+      padding: 14px 12px 14px 2px;
+      font-size: 1rem;
+      color: #8e8e93;
+      font-weight: 500;
+    }
+
+    /* 计算结果显示行 */
+    .input-group.computed {
+      background: #fefefe;
+      border-color: #e5e5ea;
+    }
+    .input-group.computed .computed-value {
+      flex: 1;
+      text-align: right;
+      padding: 14px 12px 14px 2px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #1c1c1e;
+      font-variant-numeric: tabular-nums;
+    }
+    .input-group.computed label {
+      color: #007aff;
+    }
+
+    /* 总重量行 —— 可手动覆盖 */
+    .input-group.overridable {
+      background: #fffdf5;
+      border-color: #ffe08a;
+    }
+    .input-group.overridable:focus-within {
+      background: #ffffff;
+      border-color: #007aff;
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+    }
+    .input-group.overridable label {
+      color: #b86e00;
+    }
+    .input-group.overridable input {
+      color: #b86e00;
+    }
+    .input-group.overridable input::placeholder {
+      color: #c9b98a;
+    }
+
+    /* 隐藏占位 */
+    .placeholder-cell {
+      visibility: hidden;
+    }
+
+    /* 权重模式专用行 */
+    .weight-only {
+      display: none;
+    }
+    body.weight-mode .weight-only {
+      display: grid;
+    }
+
+    /* 百分比模式专用行 */
+    .percent-only {
+      display: none;
+    }
+    body.percent-mode .percent-only {
+      display: grid;
+    }
+
+    .result-box {
+      margin-top: 28px;
+      padding: 16px 18px;
+      background: #1c1c1e;
+      border-radius: 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+    .result-label {
+      color: #aeaeb2;
+      font-size: 1rem;
+      font-weight: 400;
+    }
+    .result-value {
+      color: #ffffff;
+      font-size: 2.2rem;
+      font-weight: 600;
+      background: #2c2c2e;
+      padding: 0 20px;
+      border-radius: 60px;
+      line-height: 1.4;
+      min-width: 80px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .clear-btn {
+      background: none;
+      border: none;
+      color: #007aff;
+      font-weight: 500;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 30px;
+      background: #f2f2f7;
+      margin-top: 14px;
+      width: fit-content;
+      margin-left: auto;
+      cursor: pointer;
+      transition: 0.1s;
+      touch-action: manipulation;
+    }
+    .clear-btn:active {
+      background: #d9d9e0;
+      transform: scale(0.96);
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: #8e8e93;
+      text-align: right;
+      margin-top: 6px;
+      padding-right: 4px;
+    }
+    @media (max-width: 380px) {
+      .container { padding: 16px 12px 20px; }
+      .input-group { padding: 0 4px 0 12px; min-height: 46px; }
+      .input-group label { font-size: 0.8rem; min-width: 28px; }
+      .input-group input { font-size: 0.9rem; padding: 10px 4px; }
+      .result-value { font-size: 1.8rem; padding: 0 14px; }
+      .toggle-btn { padding: 6px 12px; font-size: 0.8rem; }
+      h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body class="percent-mode">
+<div class="container">
+  <div class="title-row">
+    <h1 id="mainTitle">🟡 统货预估</h1>
+    <div class="toggle-wrap" id="toggleWrap">
+      <button class="toggle-btn active" data-mode="percent">百分比</button>
+      <button class="toggle-btn" data-mode="weight">分选结果</button>
+    </div>
+  </div>
+
+  <div class="grid-header" id="gridHeader">
+    <span>📦 数量 (成)</span>
+    <span>💰 单价 (元)</span>
+  </div>
+
+  <!-- 特果 -->
+  <div class="input-row">
+    <div class="input-group"><label>特果</label><input type="text" id="x1" placeholder="0" inputmode="decimal"></div>
+    <div class="input-group price"><label>¥</label><input type="number" id="y1" placeholder="0.00" step="any" inputmode="decimal"></div>
+  </div>
+  <!-- 大果 -->
+  <div class="input-row">
+    <div class="input-group"><label>大果</label><input type="text" id="x2" placeholder="0" inputmode="decimal"></div>
+    <div class="input-group price"><label>¥</label><input type="number" id="y2" placeholder="0.00" step="any" inputmode="decimal"></div>
+  </div>
+  <!-- 中果 -->
+  <div class="input-row">
+    <div class="input-group"><label>中果</label><input type="text" id="x3" placeholder="0" inputmode="decimal"></div>
+    <div class="input-group price"><label>¥</label><input type="number" id="y3" placeholder="0.00" step="any" inputmode="decimal"></div>
+  </div>
+  <!-- 小果 -->
+  <div class="input-row">
+    <div class="input-group"><label>小果</label><input type="text" id="x4" placeholder="0" inputmode="decimal"></div>
+    <div class="input-group price"><label>¥</label><input type="number" id="y4" placeholder="0.00" step="any" inputmode="decimal"></div>
+  </div>
+  <!-- 小小果：左边数量/重量，右边单价（两模式共用） -->
+  <div class="input-row" id="rowXiaoxiaoguo">
+    <div class="input-group"><label>小小果</label><input type="text" id="x7" placeholder="0" inputmode="decimal"></div>
+    <div class="input-group price"><label>¥</label><input type="number" id="y6" placeholder="0.00" step="any" inputmode="decimal"></div>
+  </div>
+  <!-- 次果 -->
+  <div class="input-row">
+    <div class="input-group"><label>次果</label><input type="text" id="x5" placeholder="0" inputmode="decimal"></div>
+    <div class="input-group price"><label>¥</label><input type="number" id="y5" placeholder="0.00" step="any" inputmode="decimal"></div>
+  </div>
+
+  <!-- ====== 两模式共用 ====== -->
+  <!-- 生果：左边数量/重量，右边固定 ¥0 -->
+  <div class="input-row" id="rowShengguo">
+    <div class="input-group"><label>生果</label><input type="text" id="x6" placeholder="0" inputmode="decimal"></div>
+    <div class="input-group price"><label>¥</label><span class="fixed-price">0</span></div>
+  </div>
+
+  <!-- ====== 分选结果模式专用行 ====== -->
+  <!-- 总重量（左）| 总货款（右） -->
+  <div class="input-row weight-only" id="rowTotalWeight">
+    <div class="input-group overridable"><label>总重量</label><input type="text" id="totalWeightInput" placeholder="自动求和" inputmode="decimal"></div>
+    <div class="input-group overridable"><label>总货款</label><input type="text" id="totalPaymentInput" placeholder="自动计算" inputmode="decimal"></div>
+  </div>
+
+  <div class="result-box">
+    <span class="result-label" id="resultLabel">统货价格</span>
+    <span class="result-value" id="resultDisplay">0.00</span>
+  </div>
+  <button class="clear-btn" id="clearBtn">⟳ 清空所有</button>
+  <div class="hint" id="hintText">z = Σ (xᵢ · yᵢ · 0.1)</div>
+</div>
+
+<script>
+  (function() {
+    // ===== DOM 引用 =====
+    const xIds = ['x1','x2','x3','x4','x5'];
+    const yIds = ['y1','y2','y3','y4','y5'];
+    const xInputs = xIds.map(id => document.getElementById(id));
+    const yInputs = yIds.map(id => document.getElementById(id));
+    const x6Input = document.getElementById('x6');
+    const x7Input = document.getElementById('x7');
+    const y6Input = document.getElementById('y6');
+    const totalWeightInput = document.getElementById('totalWeightInput');
+    const totalPaymentInput = document.getElementById('totalPaymentInput');
+    const resultDisplay = document.getElementById('resultDisplay');
+    const clearBtn = document.getElementById('clearBtn');
+    const toggleWrap = document.getElementById('toggleWrap');
+    const resultLabel = document.getElementById('resultLabel');
+    const hintText = document.getElementById('hintText');
+    const gridHeader = document.getElementById('gridHeader');
+    const mainTitle = document.getElementById('mainTitle');
+
+
+    let currentMode = 'percent'; // 'percent' | 'weight'
+
+    // ===== 切换模式 =====
+    toggleWrap.addEventListener('click', function(e) {
+      const btn = e.target.closest('.toggle-btn');
+      if (!btn) return;
+      const mode = btn.dataset.mode;
+      if (mode === currentMode) return;
+
+      currentMode = mode;
+
+      // 切换时清零所有输入和结果
+      clearAll();
+
+      // 更新按钮状态
+      toggleWrap.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // 更新 body class
+      document.body.classList.remove('percent-mode', 'weight-mode');
+      document.body.classList.add(mode + '-mode');
+
+      // 更新标题
+      if (mode === 'percent') {
+        mainTitle.textContent = '🟡 统货预估';
+      } else {
+        mainTitle.textContent = '🟡 统货合算';
+      }
+
+      // 更新表头
+      if (mode === 'percent') {
+        gridHeader.innerHTML = '<span>📦 数量 (几成)</span><span>💰 单价 (元)</span>';
+      } else {
+        gridHeader.innerHTML = '<span>⚖️ 重量 (斤)</span><span>💰 单价 (元)</span>';
+      }
+
+      // 更新结果标签和提示
+      if (mode === 'percent') {
+        resultLabel.textContent = '统货价格';
+        hintText.textContent = 'z = Σ (xᵢ · yᵢ · 0.1)';
+      } else {
+        resultLabel.textContent = '果品价格';
+        hintText.textContent = '价格 = 总货款 ÷ 总重量';
+      }
+
+      calculate();
+    });
+
+    // ===== 算式求值（自实现解析器，不依赖 eval） =====
+    function evaluateExpression(expr) {
+      expr = String(expr).replace(/\s/g, '')
+        .replace(/[＋－×÷]/g, function(m) {
+          return { '＋': '+', '－': '-', '×': '*', '÷': '/' }[m];
+        });
+      if (expr === '') return null;
+
+      // 安全检查：只允许数字、运算符、小数点、括号
+      if (!/^[-0-9+*/().]+$/.test(expr)) {
+        return null;
+      }
+
+      try {
+        var tokens = tokenize(expr);
+        var result = parseExpr(tokens, 0);
+        if (result && result.pos === tokens.length && typeof result.val === 'number' && isFinite(result.val) && !isNaN(result.val)) {
+          return result.val;
+        }
+      } catch (e) {
+      }
+      return null;
+    }
+
+    // 词法分析：把字符串拆成 token 数组
+    function tokenize(s) {
+      var tokens = [];
+      var i = 0;
+      while (i < s.length) {
+        var ch = s[i];
+        if ('0123456789.'.indexOf(ch) !== -1) {
+          var num = '';
+          while (i < s.length && '0123456789.'.indexOf(s[i]) !== -1) {
+            num += s[i];
+            i++;
+          }
+          tokens.push({ type: 'num', val: parseFloat(num) });
+        } else if ('+-*/()'.indexOf(ch) !== -1) {
+          tokens.push({ type: ch });
+          i++;
+        } else {
+          // 不认识的字串，尝试跳过
+          i++;
+        }
+      }
+      return tokens;
+    }
+
+    // 递归下降：expression = term (('+'|'-') term)*
+    function parseExpr(tokens, pos) {
+      var left = parseTerm(tokens, pos);
+      if (!left) return null;
+      pos = left.pos;
+      while (pos < tokens.length && (tokens[pos].type === '+' || tokens[pos].type === '-')) {
+        var op = tokens[pos].type;
+        pos++;
+        var right = parseTerm(tokens, pos);
+        if (!right) return null;
+        if (op === '+') left = { val: left.val + right.val, pos: right.pos };
+        else left = { val: left.val - right.val, pos: right.pos };
+        pos = left.pos;
+      }
+      return { val: left.val, pos: pos };
+    }
+
+    // term = factor (('*'|'/') factor)*
+    function parseTerm(tokens, pos) {
+      var left = parseFactor(tokens, pos);
+      if (!left) return null;
+      pos = left.pos;
+      while (pos < tokens.length && (tokens[pos].type === '*' || tokens[pos].type === '/')) {
+        var op = tokens[pos].type;
+        pos++;
+        var right = parseFactor(tokens, pos);
+        if (!right) return null;
+        if (op === '*') left = { val: left.val * right.val, pos: right.pos };
+        else {
+          if (right.val === 0) return null; // 除零
+          left = { val: left.val / right.val, pos: right.pos };
+        }
+        pos = left.pos;
+      }
+      return { val: left.val, pos: pos };
+    }
+
+    // factor = '(' expr ')' | number | ('+'|'-') factor
+    function parseFactor(tokens, pos) {
+      if (pos >= tokens.length) return null;
+      var tok = tokens[pos];
+      if (tok.type === 'num') {
+        return { val: tok.val, pos: pos + 1 };
+      }
+      if (tok.type === '(') {
+        var inner = parseExpr(tokens, pos + 1);
+        if (!inner) return null;
+        if (inner.pos < tokens.length && tokens[inner.pos].type === ')') {
+          return { val: inner.val, pos: inner.pos + 1 };
+        }
+        return null;
+      }
+      if (tok.type === '+' || tok.type === '-') {
+        var factor = parseFactor(tokens, pos + 1);
+        if (!factor) return null;
+        return { val: tok.type === '+' ? factor.val : -factor.val, pos: factor.pos };
+      }
+      return null;
+    }
+
+    // ===== 绑定算式检测到输入框 =====
+    function attachExprHandler(input) {
+      input.addEventListener('blur', function() {
+        if (currentMode !== 'weight') return;
+        var val = input.value.trim();
+        if (val === '') return;
+        if (/^[0-9]+(\.[0-9]+)?$/.test(val)) return;
+        if (!/[-+*/]/.test(val)) return;
+        var result = evaluateExpression(val);
+        if (result !== null && result !== undefined) {
+          input.value = result;
+          calculate();
+        }
+      });
+    }
+
+    // ===== 计算函数 =====
+    function calculate() {
+      if (currentMode === 'percent') {
+        calculatePercent();
+      } else {
+        calculateWeight();
+      }
+    }
+
+    // 百分比模式：Z = Σ(xᵢ · yᵢ · 0.1)  特果~次果 + 小小果 + 生果(单价0)
+    function calculatePercent() {
+      let sum = 0;
+      let hasValue = false;
+
+      for (let i = 0; i < 5; i++) {
+        const xVal = parseFloat(xInputs[i].value);
+        const yVal = parseFloat(yInputs[i].value);
+
+        if (!isNaN(xVal) && !isNaN(yVal)) {
+          hasValue = true;
+          sum += xVal * yVal * 0.1;
+        } else if (xInputs[i].value.trim() !== '' || yInputs[i].value.trim() !== '') {
+          hasValue = true;
+        }
+      }
+
+      // 小小果 (x7, y6)
+      const x7Val = parseFloat(x7Input.value);
+      const y6Val = parseFloat(y6Input.value);
+      if (!isNaN(x7Val) && !isNaN(y6Val)) {
+        hasValue = true;
+        sum += x7Val * y6Val * 0.1;
+      } else if (x7Input.value.trim() !== '' || y6Input.value.trim() !== '') {
+        hasValue = true;
+      }
+
+      // 生果单价为0，贡献为0，不累加
+
+      resultDisplay.textContent = hasValue ? sum.toFixed(2) : '0.00';
+    }
+
+    // 重量模式：总货款 / 总重量
+    function calculateWeight() {
+      // --- 计算总货款（不含 0.1 系数） ---
+      // 5 种果品 + 生果（单价为 0）
+      const manualPayment = parseFloat(totalPaymentInput.value);
+      let totalPayment;
+
+      if (!isNaN(manualPayment) && totalPaymentInput.value.trim() !== '') {
+        // 用户手动输入了总货款，以用户输入为准
+        totalPayment = manualPayment;
+        totalPaymentInput.style.color = '#b86e00';
+      } else {
+        // 自动计算
+        let autoPayment = 0;
+        for (let i = 0; i < 5; i++) {
+          const xVal = parseFloat(xInputs[i].value);
+          const yVal = parseFloat(yInputs[i].value);
+          if (!isNaN(xVal) && !isNaN(yVal)) {
+            autoPayment += xVal * yVal;
+          }
+        }
+        // 小小果 (x7, y6)
+        const x7Val = parseFloat(x7Input.value);
+        const y6Val = parseFloat(y6Input.value);
+        if (!isNaN(x7Val) && !isNaN(y6Val)) {
+          autoPayment += x7Val * y6Val;
+        }
+        totalPayment = autoPayment;
+        totalPaymentInput.placeholder = autoPayment > 0 ? '自动: ' + autoPayment.toFixed(2) : '自动计算';
+        totalPaymentInput.style.color = '';
+      }
+
+      // --- 计算总重量 ---
+      const manualWeight = parseFloat(totalWeightInput.value);
+      let totalWeight;
+
+      if (!isNaN(manualWeight) && totalWeightInput.value.trim() !== '') {
+        // 用户手动输入了总重量，以用户输入为准
+        totalWeight = manualWeight;
+        totalWeightInput.style.color = '#b86e00';
+      } else {
+        // 自动计算：所有规格重量之和（特产→生果，不含总货款）
+        let autoSum = 0;
+        for (let i = 0; i < 5; i++) {
+          const xVal = parseFloat(xInputs[i].value);
+          if (!isNaN(xVal)) autoSum += xVal;
+        }
+        const x7ValW = parseFloat(x7Input.value);
+        if (!isNaN(x7ValW)) autoSum += x7ValW;
+        const x6Val = parseFloat(x6Input.value);
+        if (!isNaN(x6Val)) autoSum += x6Val;
+
+        totalWeight = autoSum;
+        // 更新 placeholder 显示自动值
+        totalWeightInput.placeholder = autoSum > 0 ? '自动: ' + autoSum.toFixed(2) : '自动求和';
+        totalWeightInput.style.color = ''; // 恢复默认
+      }
+
+      // --- 果品价格 = 总货款 / 总重量 ---
+      if (totalWeight > 0 && totalPayment >= 0) {
+        const price = totalPayment / totalWeight;
+        resultDisplay.textContent = price.toFixed(2);
+      } else if (totalWeight === 0 && totalPayment > 0) {
+        // 有货款但重量为 0，无法计算
+        resultDisplay.textContent = '—';
+      } else {
+        resultDisplay.textContent = '0.00';
+      }
+    }
+
+    // ===== 事件绑定 =====
+    function attachEvents() {
+      const allPercent = [...xInputs, ...yInputs, x7Input, y6Input];
+      allPercent.forEach(inp => {
+        inp.addEventListener('input', calculate);
+        inp.addEventListener('blur', calculate);
+      });
+
+      // 所有 x 输入（特果→次果）绑定算式检测
+      xInputs.forEach(function(inp) {
+        attachExprHandler(inp);
+      });
+
+      // 生果和总重量绑定算式检测
+      x6Input.addEventListener('input', calculate);
+      x6Input.addEventListener('blur', calculate);
+      attachExprHandler(x6Input);
+      x7Input.addEventListener('input', calculate);
+      x7Input.addEventListener('blur', calculate);
+      attachExprHandler(x7Input);
+      totalWeightInput.addEventListener('input', calculate);
+      totalWeightInput.addEventListener('blur', calculate);
+      totalPaymentInput.addEventListener('input', calculate);
+      totalPaymentInput.addEventListener('blur', calculate);
+    }
+
+    function clearAll() {
+      [...xInputs, ...yInputs].forEach(inp => inp.value = '');
+      x6Input.value = '';
+      x7Input.value = '';
+      if (y6Input) y6Input.value = '';
+      totalWeightInput.value = '';
+      totalWeightInput.style.color = '';
+      totalWeightInput.placeholder = '自动求和';
+      totalPaymentInput.value = '';
+      totalPaymentInput.style.color = '';
+      totalPaymentInput.placeholder = '自动计算';
+      resultDisplay.textContent = '0.00';
+      if (document.activeElement) document.activeElement.blur();
+    }
+
+    attachEvents();
+    clearBtn.addEventListener('click', clearAll);
+    window.addEventListener('load', calculate);
+
+    // 初始化
+    calculate();
+  })();
+</script>
+</body>
+</html>
